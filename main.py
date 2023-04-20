@@ -930,8 +930,6 @@ async def Json_repair_vibration_k_sigma(Data: VibrationInput,k = config["k"]):
 
 
 
-
-
 @app.get('/anomaly_detection/temperature/knn')
 def anomaly_detection_temperature_knn(path: str):
     """
