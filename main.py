@@ -973,6 +973,7 @@ def anomaly_detection_temperature_knn(path: str):
                     temperatures = data['temperature'].values
                     X = torch.tensor(np.column_stack((unix_timestamps, temperatures)), dtype=torch.float32)
 
+
                     # 计算最近邻居
                     k = 5
                     distances, indices = knn(X, X, k)
