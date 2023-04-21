@@ -1,5 +1,7 @@
 import json
+import base64
 
+import matplotlib.pyplot as plt
 import uvicorn
 from pydantic import BaseModel
 from typing import List
@@ -761,7 +763,7 @@ async def Json_anomaly_detection_temperature_k_sigma(Data: TemperatureInput, k =
     # 标记异常值,如果(data.values - mean) / std > k为1，反之为0
     anomaly_label = []
     for i in range(len(data.values)):
-        if (data.loc[i, "values"] - mean) / std > k:
+        if abs(data.loc[i, "values"] - mean) / std > k:
             anomaly_label.append(1)
         else:
             anomaly_label.append(0)
@@ -796,7 +798,7 @@ async def Json_anomaly_detection_vibration_k_sigma(Data: VibrationInput,k = conf
         anomaly_label_i = []
         for value in data[column]:
             # print("value============>>", value)
-            if (value - mean) / std > k:
+            if abs(value - mean) / std > k:
                 anomaly_label_i.append(1)
             else:
                 anomaly_label_i.append(0)
@@ -831,7 +833,7 @@ async def Json_repair_temperature_k_sigma(Data: TemperatureInput,k= config["k"])
     # 标记异常值,如果(data.values - mean) / std > k为1，反之为0
     anomaly_label = []
     for i in range(len(data.values)):
-        if (data.loc[i, "values"] - mean) / std > k:
+        if abs(data.loc[i, "values"] - mean) / std > k:
             anomaly_label.append(1)
         else:
             anomaly_label.append(0)
@@ -872,11 +874,183 @@ async def Json_repair_vibration_k_sigma(Data: VibrationInput,k = config["k"]):
         anomaly_label_i = []
         repairedValue = []
         for value in data[column]:
-            if (value - mean) / std > k:
+            if abs(value - mean) / std > k:
                 # 异常
                 anomaly_label_i.append(1)
                 # 修复
                 repairedValue.append(mean + k * std if value > mean else mean - k * std)
+            else:
+                # 没有异常
+                anomaly_label_i.append(0)
+                # 不用修复
+                repairedValue.append(value)
+        anomaly_label.append(anomaly_label_i)
+        repairedValues.append(repairedValue)
+
+    # anomaly_label  转置
+    anomaly_label_n = np.array(anomaly_label)
+    anomaly_label_n_T = np.transpose(anomaly_label_n)
+    anomaly_label_T = anomaly_label_n_T.tolist()
+
+    # repairedValues 转置
+    repairedValues_n = np.array(repairedValues)
+    repairedValues_n_T = np.transpose(repairedValues_n)
+    repairedValues_T = repairedValues_n_T.tolist()
+
+    # 将标记数据转换回json格式
+    response_data = {"id": Data.id, "dimension": Data.dimension, "anomalyLabel": anomaly_label_T,"repairedValues":repairedValues_T}
+    response = VibrationRepairedOutput(**response_data)
+    ################################################
+
+    return response.dict()
+
+
+
+
+@app.post("/Json/anomaly_detection/temperature/boxplot")
+async def Json_anomaly_detection_temperature_boxplot(Data: TemperatureInput, k = config["k"]):
+    # json to pandas
+    #Data 中的timestamps和values,读取到pandas中成为“timestamps”，“values”两列
+    data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
+
+    # 计算上下四分位数
+    q1, q3 = np.percentile(data['values'], [25, 75])
+    iqr = q3 - q1
+
+    # 计算离群值的范围
+    upper_bound = q3 + k * iqr
+    lower_bound = q1 - k * iqr
+
+    # 标记异常值,如果数据小于下限或大于上限则为1，反之为0
+    anomaly_label = []
+    for value in data["values"]:
+        if (value < lower_bound).any() or (value > upper_bound).any():
+            print(value)
+            anomaly_label.append(1)
+        else:
+            anomaly_label.append(0)
+
+    # 将标记数据转换回json格式
+    response_data = {"id": Data.id, "anomalyLabel": anomaly_label}
+    response = TemperatureAnomalyOutput(**response_data)
+
+    ################################################
+    return response.dict()
+
+
+
+@app.post("/Json/anomaly_detection/vibration/boxplot")
+async def Json_anomaly_detection_vibration_boxplot(Data: VibrationInput,k = config["k"]):
+    # do something with Data
+    # Data to pandas
+    data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
+
+    # print(data)
+    anomaly_label = []
+    for column in data.columns:
+
+        # 计算上下四分位数
+        q1, q3 = np.percentile(data[column], [25, 75])
+        iqr = q3 - q1
+
+        # 计算离群值的范围
+        upper_bound = q3 + k * iqr
+        lower_bound = q1 - k * iqr
+
+        anomaly_label_i = []
+        for value in data[column]:
+            if (value < lower_bound).any() or (value > upper_bound).any():
+                print(value)
+                anomaly_label_i.append(1)
+            else:
+                anomaly_label_i.append(0)
+        anomaly_label.append(anomaly_label_i)
+
+    # anomaly_label  转置
+    anomaly_label_n = np.array(anomaly_label)
+    anomaly_label_n_T = np.transpose(anomaly_label_n)
+    anomaly_label_T = anomaly_label_n_T.tolist()
+
+    # 将标记数据转换回json格式
+    response_data = {"id": Data.id,"dimension": Data.dimension,"anomalyLabel": anomaly_label_T}
+    response = VibrationAnomalyOutput(**response_data)
+    ################################################
+    return response.dict()
+
+
+
+
+
+
+@app.post("/Json/repair/temperature/boxplot")
+async def Json_repair_temperature_boxplot(Data: TemperatureInput,k= config["k"]):
+    # json to pandas
+    # Data 中的timestamps和values,读取到pandas中成为“timestamps”，“values”两列
+    data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
+
+    # 计算上下四分位数
+    q1, q3 = np.percentile(data['values'], [25, 75])
+    iqr = q3 - q1
+
+    # 计算离群值的范围
+    upper_bound = q3 + k * iqr
+    lower_bound = q1 - k * iqr
+
+    # 标记异常值,如果数据小于下限或大于上限则为1，反之为0
+    anomaly_label = []
+    for value in data["values"]:
+        if (value < lower_bound).any() or (value > upper_bound).any():
+            print(value)
+            anomaly_label.append(1)
+        else:
+            anomaly_label.append(0)
+
+
+    # 修复
+    data['repaired_values'] = data['values']
+    # 遍历 anomaly_label,计算修复值
+    for i in range(data.shape[0]):
+        if anomaly_label[i] == 1:
+            data.loc[i, 'repaired_values'] = upper_bound if data.loc[i, 'repaired_values'] > upper_bound else lower_bound
+
+    # 将标记数据转换回json格式
+    response_data = {"id": Data.id, "anomalyLabel": anomaly_label,"repairedValues": data['repaired_values'].tolist()}
+    response = TemperatureRepairedOutput(**response_data)
+    ################################################
+    return response.dict()
+
+
+
+
+
+@app.post("/Json/repair/vibration/boxplot")
+async def Json_repair_vibration_boxplot(Data: VibrationInput,k = config["k"]):
+    # do something with data
+    # Data to pandas
+    data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
+
+    # print(data)
+    anomaly_label = []
+    repairedValues = []
+    for column in data.columns:
+
+        # 计算上下四分位数
+        q1, q3 = np.percentile(data[column], [25, 75])
+        iqr = q3 - q1
+
+        # 计算离群值的范围
+        upper_bound = q3 + k * iqr
+        lower_bound = q1 - k * iqr
+
+        anomaly_label_i = []
+        repairedValue = []
+
+        for value in data[column]:
+            if (value < lower_bound).any() or (value > upper_bound).any():
+                # 异常
+                anomaly_label_i.append(1)
+                # 修复
+                repairedValue.append(upper_bound if value > upper_bound else lower_bound)
             else:
                 # 没有异常
                 anomaly_label_i.append(0)
@@ -1029,18 +1203,67 @@ async def Json_repair_temperature_arma(Data: TemperatureInput, k= config["k"]):
 # @app.route("/status")
 # def get_status():
 #     return '<h1> Hello, World! </h1>'
+def generate_html_response():
+    html_content = """
+    <!DOCTYPE html>
+<html>
+  <head>
+    <title>泰山介绍</title>
+  </head>
+  <body>
+    <h1>泰山</h1> 
+    <p>泰山是中国五岳之首，位于山东省泰安市境内，海拔1545米。泰山是道教和儒家文化的重要象征，有着悠久的历史和文化底蕴。泰山有五岳之冠、天下第一山的美誉，是中国著名的旅游胜地。</p>
+    <h2>泰山的特点</h2>
+    <ul>
+      <li>巍峨壮观：泰山主峰玉皇顶海拔1545米，高耸入云。</li>
+      <li>险峻奇特：泰山山势陡峭，有七十二峰、九十九壑、一百八十石阶。</li>
+      <li>历史文化：泰山有着丰富的历史和文化遗产，是道教和儒家文化的重要象征。</li>
+      <li>旅游胜地：泰山是中国著名的旅游胜地，吸引着众多国内外游客前来观光、登山。</li>
+    </ul>
+  </body>
+</html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
+
+
+@app.get("/plot", response_class=HTMLResponse)
+async def Json_anomaly_detection_temperature_k_sigma_plot(Data: TemperatureInput, k=3):
+    timestamps = Data.timestamps
+    values = Data.values
+
+    # Calculate the mean and standard deviation of the values
+    mean = sum(values) / len(values)
+    std_dev = (sum((x - mean) ** 2 for x in values) / len(values)) ** 0.5
+
+    # Identify anomalies (values more than k standard deviations from the mean)
+    anomalies = [i for i in range(len(values)) if abs(values[i] - mean) > k * std_dev]
+
+    # Create a line plot of the timestamps and values
+    fig, ax = plt.subplots()
+    ax.plot(timestamps, values)
+    ax.set(xlabel='Timestamps', ylabel='Temperature (Celsius)',
+           title='Temperature vs Time')
+    ax.grid()
+
+    # Add red dots to the plot to highlight the anomalies
+    ax.scatter([timestamps[i] for i in anomalies], [values[i] for i in anomalies], color='red')
+
+    # Save the plot to a PNG file
+    fig.savefig("show/png/temperature_plot.png")
+
+    # Show the plot in a separate window (this is optional)
+    #plt.show()
+
+    # Return the HTML content to display the plot in the frontend
+    with open("show/png/temperature_plot.png", "rb") as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+
+    html_content = f'<img src="data:image/png;base64,{encoded_image}">'
+    return HTMLResponse(content=html_content, status_code=200)
+
 @app.get("/items/", response_class=HTMLResponse)
 async def read_items():
-    return """
-    <html>
-        <head>
-            <title>Some HTML in here</title>
-        </head>
-        <body>
-            <h1>Look ma! HTML!</h1>
-        </body>
-    </html>
-    """
+    return generate_html_response()
 
 dash_app = create_dash_app(requests_pathname_prefix="/dash/")
 app.mount("/dash", WSGIMiddleware(dash_app.server))
