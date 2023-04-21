@@ -431,17 +431,9 @@ def anomaly_detection_threshold(data: Data):
     else:
         return {"message": "No data"}
 
-
-@app.get("/")
-def read_main():
-    return {
-        "routes": [
-            {"method": "GET", "path": "/", "summary": "Landing"},
-            {"method": "GET", "path": "/status", "summary": "App status"},
-            {"method": "GET", "path": "/dash",
-             "summary": "Sub-mounted Dash application"},
-        ]
-    }
+##########################################################################################
+########################################## Done ##########################################
+##########################################################################################
 
 @app.get('/anomaly_detection/temperature/k_sigma')
 def anomaly_detection_temperature_k_sigma(path: str,k = config["k"]):
@@ -453,7 +445,6 @@ def anomaly_detection_temperature_k_sigma(path: str,k = config["k"]):
     """
     # 获取数据
     # path = 'D:/Pyprogram/fastApiProject_anomaly_detection/datasets/temperature/raw'
-
 
     ################################################
     for root, dirs, files in os.walk(path):
@@ -691,14 +682,9 @@ def repair_vibration_k_sigma(path: str,k = config["k"], halfdaynum = 144):
             for file in os.listdir(subdir_path):
                 file_path = os.path.join(subdir_path, file)
 
-                # 记录索引
-                same_rows_arrays = []
-                outliers_arrays = []
-
                 # 读取文件到pandas
                 if file.endswith('.csv'):
-                    data = pd.read_csv(file_path, sep=',')
-
+                    data = pd.read_csv(file_path, sep=',', nrows =halfdaynum)
                     # name for data,first index is timestamp,others are value
                     if data.shape[1] == 5:
                         data.columns = ['timestamp', 'AccelerationPeakX', 'AccelerationRmsX', 'SpeedPeakX', 'SpeedRmsX']
@@ -706,66 +692,55 @@ def repair_vibration_k_sigma(path: str,k = config["k"], halfdaynum = 144):
                         data.columns = ['timestamp', 'AccelerationPeakX', 'AccelerationRmsX', 'SpeedPeakX', 'SpeedRmsX',
                                         'AccelerationPeakY', 'AccelerationRmsY', 'SpeedPeakY', 'SpeedRmsY',
                                         'AccelerationPeakZ', 'AccelerationRmsZ', 'SpeedPeakZ', 'SpeedRmsZ']
+
                     # 时间戳转换成日期
                     data['timestamp'] = data['timestamp'].apply(
                         lambda d: datetime.datetime.fromtimestamp(int(d) / 1000).strftime('%Y-%m-%d %H:%M:%S'))
                     data['timestamp'] = pd.to_datetime(data['timestamp'])
 
+                    anomaly_label= []
+                    repairedValues = []
                     # 分列找出每列的重复值、异常值，存入各自duplicated.csv
                     for col in data.columns:
-                        if col == 'timestamp':
-                            continue
-                        col_data = data[['timestamp', col]].copy()
-                        # 找出col_data中timestamp、col都重复的行
-                        same_rows = col_data[col_data.duplicated(subset={'timestamp', col}, keep=False) & (
-                                col_data['timestamp'] == col_data['timestamp'].shift(1))]
-
-                        # data去除重复值,只保留最后一个
-                        col_data = col_data.drop_duplicates(subset='timestamp', keep='last')
-
                         # 计算平均值和标准差
-                        mean = col_data[col].mean()
-                        std = col_data[col].std()
+                        mean = data[col].mean()
+                        std = data[col].std()
 
-                        # 计算异常值
-                        outliers = col_data[((col_data[col] - mean) / std) > k]
+                        # 标记异常值,如果(data.values - mean) / std > k为1，反之为0
+                        anomaly_label_i = []
+                        repairedValue = []
 
-                        # save to csv
-                        output_path = subdir_path.replace("raw\\", "output/")
-                        if not os.path.exists(output_path):
-                            os.mkdir(output_path)
+                        for value in data[col]:
+                            if (value - mean) / std > k:
+                                # 异常
+                                anomaly_label_i.append(1)
+                                # 修复
+                                repairedValue.append(mean + k * std if value > mean else mean - k * std)
+                            else:
+                                # 没有异常
+                                anomaly_label_i.append(0)
+                                # 不用修复
+                                repairedValue.append(value)
+                        anomaly_label.append(anomaly_label_i)
+                        repairedValues.append(repairedValue)
 
-                        same_rows_filename = os.path.join(output_path, col + '-duplicated.csv')
-                        same_rows.to_csv(same_rows_filename, index=False)
+                    # repairedValues 转置
+                    repairedValues_n = np.array(repairedValues)
+                    repairedValues_n_T = np.transpose(repairedValues_n)
+                    repairedValues_T = repairedValues_n_T.tolist()
 
-                        outliers_filename = os.path.join(output_path, col + '-outliers.csv')
-                        outliers.to_csv(outliers_filename, index=False)
+                    # 将行和列放到数据集中
+                    # data_repaired = pd.DataFrame(np.array(repairedValues_T), index=repairedValues_T[:][1])
+                    # data_repaired['anomaly_label'] = np.array(anomaly_label)
+                    data.values[:,:] = np.array(repairedValues_T)
+                    # 存入csv
+                    output_path = subdir_path.replace("raw\\", "output/")
+                    if not os.path.exists(output_path):
+                        os.mkdir(output_path)
 
-                        # 记录索引
-                        same_rows_index = same_rows.index.tolist()
-                        same_rows_arrays.append(same_rows_index[:min(halfdaynum, len(same_rows_index))])
-                        outliers_index = outliers.index.tolist()
-                        outliers_arrays.append(outliers_index[:min(halfdaynum, len(outliers_arrays))])
+                    repaired_filename = os.path.join(output_path, 'reparied')
+                    data.to_csv(repaired_filename, index=False)
 
-                    ## 都重复、异常的点保存到duplicated.csv、outliers.csv
-                    # outliers_arrays列表中有 len(outliers_arrays) 个单维递增列表数据，所有数如果在任意 len(outliers_arrays)//3 个及以上的单维递增列表中出现，则将该数记录为重点异常，记录到 same_rows_vital 列表中
-                    outliers_vital = []
-                    # 创建 一个 字典来统计每个数在哪些单维递增列表中出现
-                    num_count = {}
-                    for arr in outliers_arrays:
-                        for num in arr:
-                            if num not in num_count:
-                                num_count[num] = set()
-                            num_count[num].add(outliers_arrays.index(arr))
-
-                    # 判断哪些数出现在了3个及以上的单维递增列表中
-                    for num, count in num_count.items():
-                        if len(count) >= len(outliers_arrays) // 3:
-                            outliers_vital.append(num)
-
-                    # save to csv
-                    outliers_filename = os.path.join(subdir_path.replace("raw\\", "output/"), 'outliers.csv')
-                    data.iloc[outliers_vital, :].to_csv(outliers_filename, index=False)
 
     ################################################
 
@@ -927,7 +902,9 @@ async def Json_repair_vibration_k_sigma(Data: VibrationInput,k = config["k"]):
 
     return response.dict()
 
-
+##########################################################################################
+########################################## Test ##########################################
+##########################################################################################
 
 
 @app.get('/anomaly_detection/temperature/knn')
@@ -1050,10 +1027,21 @@ async def Json_repair_temperature_arma(Data: TemperatureInput, k= config["k"]):
     return response.dict()
 
 
-@app.get("/status")
-def get_status():
-    return {"status": "ok"}
-
+# @app.route("/status")
+# def get_status():
+#     return '<h1> Hello, World! </h1>'
+@app.get("/items/", response_class=HTMLResponse)
+async def read_items():
+    return """
+    <html>
+        <head>
+            <title>Some HTML in here</title>
+        </head>
+        <body>
+            <h1>Look ma! HTML!</h1>
+        </body>
+    </html>
+    """
 
 dash_app = create_dash_app(requests_pathname_prefix="/dash/")
 app.mount("/dash", WSGIMiddleware(dash_app.server))
