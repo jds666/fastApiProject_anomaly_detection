@@ -9,7 +9,6 @@
 
 文件main.py,是使用fastapi构建的API。
 
-
 1. 支持temperature/vibration两种格式的csv/json输入。
 2. 支持k-sigma异常检测方法。
 3. 支持k-sigma数据修复方法。 
