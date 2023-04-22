@@ -18,7 +18,7 @@ print(id)
 model_path = r'model\temperature\_'+id+'_lstm_model.h5'
 ploty_html_path = r'html\_'+id+'_my_plot.html'
 
-
+# 获取配置文件
 config = get_config_from_json(json_file)
 
 
