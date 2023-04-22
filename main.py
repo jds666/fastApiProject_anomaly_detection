@@ -21,6 +21,9 @@ import csv
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+from keras.models import load_model
+from lstm.utils import *
+from lstm.ploty_show import *
 
 
 app = FastAPI()
@@ -1168,7 +1171,7 @@ def anomaly_detection_temperature_knn(path: str):
     return {"message:": "success"}
 
 @app.post("/Json/anomaly_detection/temperature/lstm")
-async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput,epochs = 100,batch_size=72):
+async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
 
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
     # data timestamps 转换为日期格式
@@ -1176,31 +1179,9 @@ async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput,epochs 
 
     data.set_index("timestamps", inplace=True)
 
-    ########################训练##############################
-    # # 转换数据格式
-    # scaler = MinMaxScaler()  # 归一化
-    # data = scaler.fit_transform(data)
-    # # 将数据拆分为训练集和测试集
-    # train_size = int(len(data) * 0.7)
-    # train_data = data[:train_size, :]
-    # test_data = data[train_size:, :]
-    #
-    # # 创建LSTM模型
-    # model = Sequential()
-    # model.add(LSTM(units=50, return_sequences=True, input_shape=(train_data.shape[1], 1)))
-    # model.add(LSTM(units=50))
-    # model.add(Dense(1))
-    # model.compile(loss='mean_squared_error', optimizer='adam')
-    #
-    # # 训练LSTM模型
-    # model.fit(train_data[:, :, np.newaxis], train_data[:, 0], epochs=epochs, batch_size=batch_size)
-    # model.save('show\model\lstm_model.h5')
-    #########################################################
-
-    from tensorflow.keras.models import load_model
-
-    model_path = r'show\model\_'+Data.id+'_lstm_model.h5'
+    model_path = r'D:\Pyprogram\fastApiProject_anomaly_detection\lstm\model\temperature\0a1ee4feff8d79e0-S_lstm_model.h5'
     loaded_model = load_model(model_path)
+
     ########################推理##############################
     scaler = MinMaxScaler()  # 归一化
     data = scaler.fit_transform(data)
@@ -1216,17 +1197,34 @@ async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput,epochs 
     mae = np.mean(np.abs(test_predict - test_data[:, 0]))
 
     # 根据平均绝对误差确定异常点
-    threshold = mae * 2
+    threshold = mae * config["lstm_threshold_mea_k"]
     anomalies = np.where(np.abs(test_predict - test_data[:, 0]) > threshold)
+    # print(f"异常点：{anomalies[0]}")
+
+    # 标记异常值,如果在anomalies[0]中为1，反之为0
+    anomaly_label = []
+    for i in range(len(Data.values)):
+        if i in anomalies[0]:
+            anomaly_label.append(1)
+        else:
+            anomaly_label.append(0)
+
+    # 反归一化数据
+    original_data = scaler.inverse_transform(data)
+    anomalies_data = scaler.inverse_transform(test_data[anomalies[0], :])
 
     # 绘制原始数据和异常点
-    plt.figure(figsize=(12, 6))
-    plt.plot(scaler.inverse_transform(data), label='Original Data')
-    if len(anomalies[0]) > 0:
-        plt.plot(train_size + anomalies[0], scaler.inverse_transform(test_data[anomalies[0], :]), 'ro', label='Anomalies')
-    plt.legend()
-    plt.show()
-    return {"message:": "success"}
+    plot_show_plotly(original_data, anomalies_data, anomalies, 0)
+
+
+    # 将标记数据转换回json格式
+    response_data = {"id": Data.id, "anomalyLabel": anomaly_label}
+    response = TemperatureAnomalyOutput(**response_data)
+
+    ################################################
+    return response.dict()
+    # return {"message:","succeeded"}
+
 
 @app.post("/Json/repair/temperature/arma")
 async def Json_repair_temperature_arma(Data: TemperatureInput, k= config["k"]):
