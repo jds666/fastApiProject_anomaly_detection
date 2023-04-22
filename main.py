@@ -18,6 +18,9 @@ from statsmodels.tsa.arima.model import ARIMA
 import datetime
 import os
 import csv
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
 
 
 app = FastAPI()
@@ -754,6 +757,7 @@ def repair_vibration_k_sigma(path: str,k = config["k"], halfdaynum = 144):
 async def Json_anomaly_detection_temperature_k_sigma(Data: TemperatureInput, k = config["k"]):
     # json to pandas
     #Data 中的timestamps和values,读取到pandas中成为“timestamps”，“values”两列
+
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
 
     # 计算平均值和标准差
@@ -771,13 +775,14 @@ async def Json_anomaly_detection_temperature_k_sigma(Data: TemperatureInput, k =
     # 将标记数据转换回json格式
     response_data = {"id": Data.id, "anomalyLabel": anomaly_label}
     response = TemperatureAnomalyOutput(**response_data)
+
     ################################################
     return response.dict()
 
 
 
 @app.post("/Json/anomaly_detection/vibration/k-sigma")
-async def Json_anomaly_detection_vibration_k_sigma(Data: VibrationInput,k = config["k"]):
+async def Json_anomaly_detection_vibration_k_sigma(Data: VibrationInput,k = 2):
     # do something with Data
     # Data to pandas
     data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
@@ -1162,7 +1167,66 @@ def anomaly_detection_temperature_knn(path: str):
     #         "异常点数量：": outliers.shape[0]}
     return {"message:": "success"}
 
+@app.post("/Json/anomaly_detection/temperature/lstm")
+async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput,epochs = 100,batch_size=72):
 
+    data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
+    # data timestamps 转换为日期格式
+    data["timestamps"] = pd.to_datetime(data.timestamps, unit="ms")
+
+    data.set_index("timestamps", inplace=True)
+
+    ########################训练##############################
+    # # 转换数据格式
+    # scaler = MinMaxScaler()  # 归一化
+    # data = scaler.fit_transform(data)
+    # # 将数据拆分为训练集和测试集
+    # train_size = int(len(data) * 0.7)
+    # train_data = data[:train_size, :]
+    # test_data = data[train_size:, :]
+    #
+    # # 创建LSTM模型
+    # model = Sequential()
+    # model.add(LSTM(units=50, return_sequences=True, input_shape=(train_data.shape[1], 1)))
+    # model.add(LSTM(units=50))
+    # model.add(Dense(1))
+    # model.compile(loss='mean_squared_error', optimizer='adam')
+    #
+    # # 训练LSTM模型
+    # model.fit(train_data[:, :, np.newaxis], train_data[:, 0], epochs=epochs, batch_size=batch_size)
+    # model.save('show\model\lstm_model.h5')
+    #########################################################
+
+    from tensorflow.keras.models import load_model
+
+    model_path = r'show\model\_'+Data.id+'_lstm_model.h5'
+    loaded_model = load_model(model_path)
+    ########################推理##############################
+    scaler = MinMaxScaler()  # 归一化
+    data = scaler.fit_transform(data)
+    train_size = 0
+    test_data = data[train_size:, :]
+    #########################################################
+
+    # 对测试集进行预测
+    test_predict = loaded_model.predict(test_data[:, :, np.newaxis])
+    test_predict = np.squeeze(test_predict)
+
+    # 计算平均绝对误差
+    mae = np.mean(np.abs(test_predict - test_data[:, 0]))
+
+    # 根据平均绝对误差确定异常点
+    threshold = mae * 2
+    anomalies = np.where(np.abs(test_predict - test_data[:, 0]) > threshold)
+
+    # 绘制原始数据和异常点
+    plt.figure(figsize=(12, 6))
+    plt.plot(scaler.inverse_transform(data), label='Original Data')
+    if len(anomalies[0]) > 0:
+        plt.plot(train_size + anomalies[0], scaler.inverse_transform(test_data[anomalies[0], :]), 'ro', label='Anomalies')
+    plt.legend()
+    plt.show()
+    return {"message:": "success"}
 
 @app.post("/Json/repair/temperature/arma")
 async def Json_repair_temperature_arma(Data: TemperatureInput, k= config["k"]):

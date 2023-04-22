@@ -1,4 +1,7 @@
 {
   "k": 3,
-  "method": "k-sigma"
+  "method": "k-sigma",
+  "lstm_epochs": 50,
+  "lstm_batch_size": 128,
+  "lstm_threshold_mea_k": 2
 }
