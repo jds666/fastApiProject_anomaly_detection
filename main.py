@@ -409,13 +409,39 @@ class VibrationInput(BaseModel):
 class VibrationAnomalyOutput(BaseModel):
     id: str
     dimension: int
-    anomalyLabel: List[List[int]]
+    # anomalyLabel: List[List[int]]
+    anomalyLabelSum: List[int]
 
 class VibrationRepairedOutput(BaseModel):
     id: str
     dimension: int
-    anomalyLabel: List[List[int]]
+    # anomalyLabel: List[List[int]]
+    anomalyLabelSum: List[int]
     repairedValues: List[List[float]]
+
+
+
+def return_TemperatureAnomalyOutput_response(id,anomaly_label):
+    # 将标记数据转换回json格式
+    response_data = {"id":id, "anomalyLabel": anomaly_label}
+    response = TemperatureAnomalyOutput(**response_data)
+    return  response.dict()
+def return_TemperatureRepairedOutput_response(id,anomaly_label,repairedValues):
+    # 将标记数据转换回json格式
+    response_data = {"id": id, "anomalyLabel": anomaly_label, "repairedValues": repairedValues}
+    response = TemperatureRepairedOutput(**response_data)
+    return  response.dict()
+def return_VibrationAnomalyOutput_response(id,dimension,anomalyLabelSum):
+    # 将标记数据转换回json格式
+    response_data = {"id": id, "dimension": dimension, "anomalyLabelSum": anomalyLabelSum}
+    response = VibrationAnomalyOutput(**response_data)
+    return  response.dict()
+def return_VibrationRepairedOutput_response(id,dimension,anomalyLabelSum,repairedValues):
+    # 将标记数据转换回json格式
+    response_data = {"id": id, "dimension": dimension, "anomalyLabelSum": anomalyLabelSum,"repairedValues": repairedValues}
+    response = VibrationRepairedOutput(**response_data)
+    return  response.dict()
+
 
 # 均值计算
 @app.post('/anomaly_detection/threshold')
@@ -773,13 +799,7 @@ async def Json_anomaly_detection_temperature_k_sigma(Data: TemperatureInput, k =
         else:
             anomaly_label.append(0)
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id, "anomalyLabel": anomaly_label}
-    response = TemperatureAnomalyOutput(**response_data)
-
-    ################################################
-    return response.dict()
-
+    return return_TemperatureAnomalyOutput_response(Data.id, anomaly_label)
 
 
 @app.post("/Json/anomaly_detection/vibration/k-sigma")
@@ -813,17 +833,9 @@ async def Json_anomaly_detection_vibration_k_sigma(Data: VibrationInput,k = 2):
     # anomaly_label  转置
     anomaly_label_n = np.array(anomaly_label)
     anomaly_label_n_T = np.transpose(anomaly_label_n)
-    anomaly_label_T = anomaly_label_n_T.tolist()
+    anomaly_label_sum = [np.sum(x) for x in anomaly_label_n_T]
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id,"dimension": Data.dimension,"anomalyLabel": anomaly_label_T}
-    response = VibrationAnomalyOutput(**response_data)
-    ################################################
-    return response.dict()
-
-
-
-
+    return return_VibrationAnomalyOutput_response(Data.id, Data.dimension, anomaly_label_sum)
 
 
 @app.post("/Json/repair/temperature/k-sigma")
@@ -852,13 +864,7 @@ async def Json_repair_temperature_k_sigma(Data: TemperatureInput,k= config["k"])
         if anomaly_label[i] == 1:
             data.loc[i, 'repaired_values'] = mean + k * std if data.loc[i, 'repaired_values'] > mean else mean - k * std
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id, "anomalyLabel": anomaly_label,"repairedValues": data['repaired_values'].tolist()}
-    response = TemperatureRepairedOutput(**response_data)
-    ################################################
-    return response.dict()
-
-
+    return return_TemperatureRepairedOutput_response(Data.id, anomaly_label, data['repaired_values'].tolist())
 
 
 
@@ -896,21 +902,14 @@ async def Json_repair_vibration_k_sigma(Data: VibrationInput,k = config["k"]):
     # anomaly_label  转置
     anomaly_label_n = np.array(anomaly_label)
     anomaly_label_n_T = np.transpose(anomaly_label_n)
-    anomaly_label_T = anomaly_label_n_T.tolist()
+    anomaly_label_sum = [np.sum(x) for x in anomaly_label_n_T]
 
     # repairedValues 转置
     repairedValues_n = np.array(repairedValues)
     repairedValues_n_T = np.transpose(repairedValues_n)
     repairedValues_T = repairedValues_n_T.tolist()
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id, "dimension": Data.dimension, "anomalyLabel": anomaly_label_T,"repairedValues":repairedValues_T}
-    response = VibrationRepairedOutput(**response_data)
-    ################################################
-
-    return response.dict()
-
-
+    return return_VibrationRepairedOutput_response(Data.id, Data.dimension, anomaly_label_sum, repairedValues_T)
 
 
 @app.post("/Json/anomaly_detection/temperature/boxplot")
@@ -936,12 +935,7 @@ async def Json_anomaly_detection_temperature_boxplot(Data: TemperatureInput, k =
         else:
             anomaly_label.append(0)
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id, "anomalyLabel": anomaly_label}
-    response = TemperatureAnomalyOutput(**response_data)
-
-    ################################################
-    return response.dict()
+    return return_TemperatureAnomalyOutput_response(Data.id, anomaly_label)
 
 
 
@@ -975,13 +969,10 @@ async def Json_anomaly_detection_vibration_boxplot(Data: VibrationInput,k = conf
     # anomaly_label  转置
     anomaly_label_n = np.array(anomaly_label)
     anomaly_label_n_T = np.transpose(anomaly_label_n)
-    anomaly_label_T = anomaly_label_n_T.tolist()
+    anomaly_label_sum = [np.sum(x) for x in anomaly_label_n_T]
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id,"dimension": Data.dimension,"anomalyLabel": anomaly_label_T}
-    response = VibrationAnomalyOutput(**response_data)
-    ################################################
-    return response.dict()
+    return return_VibrationAnomalyOutput_response(Data.id, Data.dimension,anomaly_label_sum)
+
 
 
 
@@ -1019,14 +1010,7 @@ async def Json_repair_temperature_boxplot(Data: TemperatureInput,k= config["k"])
         if anomaly_label[i] == 1:
             data.loc[i, 'repaired_values'] = upper_bound if data.loc[i, 'repaired_values'] > upper_bound else lower_bound
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id, "anomalyLabel": anomaly_label,"repairedValues": data['repaired_values'].tolist()}
-    response = TemperatureRepairedOutput(**response_data)
-    ################################################
-    return response.dict()
-
-
-
+    return return_TemperatureRepairedOutput_response(Data.id, anomaly_label, data['repaired_values'].tolist())
 
 
 @app.post("/Json/repair/vibration/boxplot")
@@ -1068,105 +1052,16 @@ async def Json_repair_vibration_boxplot(Data: VibrationInput,k = config["k"]):
     # anomaly_label  转置
     anomaly_label_n = np.array(anomaly_label)
     anomaly_label_n_T = np.transpose(anomaly_label_n)
-    anomaly_label_T = anomaly_label_n_T.tolist()
+    anomaly_label_sum = [np.sum(x) for x in anomaly_label_n_T]
 
     # repairedValues 转置
     repairedValues_n = np.array(repairedValues)
     repairedValues_n_T = np.transpose(repairedValues_n)
     repairedValues_T = repairedValues_n_T.tolist()
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id, "dimension": Data.dimension, "anomalyLabel": anomaly_label_T,"repairedValues":repairedValues_T}
-    response = VibrationRepairedOutput(**response_data)
-    ################################################
-
-    return response.dict()
-
-##########################################################################################
-########################################## Test ##########################################
-##########################################################################################
-
-@app.get('/anomaly_detection/temperature/knn')
-def anomaly_detection_temperature_knn(path: str):
-    """
-    单维异常检测 k-sigma
-    :param path:
-    :param k:
-    :return:
-    """
-    # 获取数据
-    # path = 'D:/Pyprogram/fastApiProject_anomaly_detection/datasets/temperature/raw'
+    return return_VibrationRepairedOutput_response(Data.id, Data.dimension, anomaly_label_sum, repairedValues_T)
 
 
-    ################################################
-    for root, dirs, files in os.walk(path):
-        for dir in dirs:
-            subdir_path = os.path.join(root, dir)
-            # sum_data = 0
-            for file in os.listdir(subdir_path):
-                file_path = os.path.join(subdir_path, file)
-                # 读取文件到pandas
-                if file.endswith('.csv'):
-                    data = pd.read_csv(file_path, sep=',', names=['timestamp', 'temperature'])
-
-                    # 时间戳转换成 unix
-                    timestamps = data['timestamp'].values
-                    unix_timestamps = np.array(
-                        [datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S").timestamp() for ts in timestamps])
-
-                    # 找出所有重复行
-                    same_timestamp_rows = data[data.duplicated(subset='timestamp', keep=False) & (data['timestamp'] == data['timestamp'].shift(1))]
-
-                    # data去除重复值,只保留最后一个
-                    data = data.drop_duplicates(subset='timestamp', keep='last')
-
-                    # 计算lof
-                    #####################################################################
-
-                    # 将数据转换为 PyTorch 张量
-                    temperatures = data['temperature'].values
-                    X = torch.tensor(np.column_stack((unix_timestamps, temperatures)), dtype=torch.float32)
-
-
-                    # 计算最近邻居
-                    k = 5
-                    distances, indices = knn(X, X, k)
-
-                    # 计算 LOF 得分
-                    lof = torch.zeros(X.shape[0])
-                    for i in range(X.shape[0]):
-                        k_distances = distances[i][1:]
-                        k_indices = indices[i][1:]
-                        reach_distances = torch.max(torch.stack([k_distances, distances[k_indices, 1]], dim=1), dim=1)[
-                            0]
-                        lof[i] = torch.mean(reach_distances) / k_distances.mean()
-
-                    # 打印异常点
-                    threshold = 1.5
-                    anomalies_idx = torch.where(lof > threshold)[0].tolist()
-                    outliers = data.iloc[anomalies_idx, :]
-                    print(outliers)
-
-                    #####################################################################
-
-                    # 保存结果到文件中
-                    output_path = subdir_path.replace("raw\\", "output/")
-                    if not os.path.exists(output_path):
-                        os.mkdir(output_path)
-
-                    same_timestamp_rows_filename = os.path.join(output_path, 'duplicated.csv')
-                    outliers_filename = os.path.join(output_path, 'outliers.csv')
-
-                    same_timestamp_rows.to_csv(same_timestamp_rows_filename, index=False)
-                    outliers.to_csv(outliers_filename, index=False)
-
-
-    ################################################
-    # return {"原数据行数": data.shape[0],
-    #         "重复点数量：": same_timestamp_rows.shape[0],
-    #         "清洗之后数据行数": data.shape[0] - same_timestamp_rows.shape[0],
-    #         "异常点数量：": outliers.shape[0]}
-    return {"message:": "success"}
 
 @app.post("/Json/anomaly_detection/temperature/lstm")
 async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
@@ -1217,17 +1112,10 @@ async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
     # 绘制原始数据和异常点
     plot_show_plotly(original_data, anomalies,data_time,0,id = Data.id)
 
-
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id, "anomalyLabel": anomaly_label}
-    response = TemperatureAnomalyOutput(**response_data)
-
-    ################################################
-    return response.dict()
-    # return {"message:","succeeded"}
+    return return_TemperatureAnomalyOutput_response(Data.id, anomaly_label)
 
 @app.post("/Json/repair/temperature/lstm")
-async def Json_repair_temperature_lstm(Data: TemperatureInput,k = config["k"]):
+async def Json_repair_temperature_lstm(Data: TemperatureInput):
 
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
     # data timestamps 转换为日期格式
@@ -1273,19 +1161,13 @@ async def Json_repair_temperature_lstm(Data: TemperatureInput,k = config["k"]):
     original_data = scaler.inverse_transform(data)
     repair_data = scaler.inverse_transform(repair_data)
 
-
     #[:5]) 绘制原始数据和异常点
     # plot_show_plotly(original_data, anomalies, 0,id = Data.id)
     plot_show_plotly_repair(original_data, repair_data, data_time,id=Data.id)
     repair_data = np.squeeze(repair_data).tolist()
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id, "anomalyLabel": anomaly_label,"repairedValues":repair_data}
-    response = TemperatureRepairedOutput(**response_data)
+    return return_TemperatureRepairedOutput_response(Data.id, anomaly_label, repair_data)
 
-    ################################################
-    return response.dict()
-    # return {"message:","succeeded"}
 
 
 @app.post("/Json/anomaly_detection/vibration/lstm")
@@ -1334,11 +1216,8 @@ async def Json_anomaly_detection_vibration_lstm(Data: VibrationInput):
         # 根据平均绝对误差确定异常点
         threshold = mae * config["lstm_threshold_mea_k"]
         anomalies = np.where(np.abs(test_predict[:,j] - test_data[:, j]) > threshold)
-        # print(j,f"异常点：{anomalies[0]}")
         if np.array(anomalies_max).shape[1] < np.array(anomalies).shape[1]:
             anomalies_max = anomalies
-            # print(f"最大异常点：{np.array(anomalies_max).shape[1]}")
-        # 标记异常值,如果在anomalies[0]中为1，反之为0
         anomaly_label = []
         for i in range(len(Data.values)):
             if i in anomalies[0]:
@@ -1350,7 +1229,7 @@ async def Json_anomaly_detection_vibration_lstm(Data: VibrationInput):
     # anomaly_label_all  转置
     anomaly_label_all_n = np.array(anomaly_label_all)
     anomaly_label_all_n_T = np.transpose(anomaly_label_all_n)
-    anomaly_label_all_T = anomaly_label_all_n_T.tolist()
+    anomaly_label_sum = [ np.sum(x) for x in anomaly_label_all_n_T]
 
 
     # 反归一化数据
@@ -1358,11 +1237,8 @@ async def Json_anomaly_detection_vibration_lstm(Data: VibrationInput):
 
     plot_show_plotly(original_data, anomalies_max,data_time, 0,id = Data.id)
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id, "dimension": Data.dimension, "anomalyLabel": anomaly_label_all_T}
-    response = VibrationAnomalyOutput(**response_data)
-    ################################################
-    return response.dict()
+    return return_VibrationAnomalyOutput_response(Data.id, Data.dimension,anomaly_label_sum)
+
 
 
 @app.post("/Json/repair/vibration/lstm")
@@ -1386,18 +1262,21 @@ async def Json_repair_vibration_lstm(Data: VibrationInput):
 
     ########################推理##############################
     scaler = MinMaxScaler()  # 归一化
-    print(data.head())
     data = scaler.fit_transform(data)
     train_size = 0
     test_data = data[train_size:, :]
     #########################################################
 
     # 对测试集进行预测
-    print(test_data[:, :, np.newaxis])
     test_predict = loaded_model.predict(test_data[:, :, np.newaxis])
     repair_data = test_predict
-    print(repair_data)
     test_predict = np.squeeze(test_predict)
+
+    # 反归一化数据
+    original_data = scaler.inverse_transform(data)
+    repair_data = scaler.inverse_transform(repair_data)
+
+    repairedValues = original_data.tolist()
 
     anomaly_label_all = []
     for j in range(Data.dimension):
@@ -1406,13 +1285,14 @@ async def Json_repair_vibration_lstm(Data: VibrationInput):
         # 根据平均绝对误差确定异常点
         threshold = mae * config["lstm_threshold_mea_k"]
         anomalies = np.where(np.abs(test_predict[:,j] - test_data[:, j]) > threshold)
-        print(j,f"异常点：{anomalies[0]}")
+        # print(j,f"异常点：{anomalies[0]}")
 
         # 标记异常值,如果在anomalies[0]中为1，反之为0
         anomaly_label = []
         for i in range(len(Data.values)):
             if i in anomalies[0]:
                 anomaly_label.append(1)
+                repairedValues[i][j] = repair_data[i][j]
             else:
                 anomaly_label.append(0)
         anomaly_label_all.append(anomaly_label)
@@ -1420,25 +1300,100 @@ async def Json_repair_vibration_lstm(Data: VibrationInput):
     # anomaly_label_all  转置
     anomaly_label_all_n = np.array(anomaly_label_all)
     anomaly_label_all_n_T = np.transpose(anomaly_label_all_n)
-    anomaly_label_all_T = anomaly_label_all_n_T.tolist()
+    anomaly_label_sum = [ np.sum(x) for x in anomaly_label_all_n_T]
 
-
-    # 反归一化数据
-    original_data = scaler.inverse_transform(data)
-    repair_data = scaler.inverse_transform(repair_data)
-
-
-    # [:5]) 绘制原始数据和异常点
-    # plot_show_plotly(original_data, anomalies, 0,id = Data.id)
+    # 绘制原始数据和预测数据
     plot_show_plotly_repair(original_data, repair_data, data_time, id=Data.id)
-    repair_data = np.squeeze(repair_data).tolist()
 
-    # 将标记数据转换回json格式
-    response_data = {"id": Data.id, "dimension": Data.dimension, "anomalyLabel": anomaly_label_all_T,
-                     "repairedValues": repair_data}
-    response = VibrationRepairedOutput(**response_data)
-    ################################################
-    return response.dict()
+    return return_VibrationRepairedOutput_response(Data.id, Data.dimension, anomaly_label_sum, repairedValues)
+
+
+##########################################################################################
+########################################## Test ##########################################
+##########################################################################################
+
+# @app.get('/anomaly_detection/temperature/knn')
+# def anomaly_detection_temperature_knn(path: str):
+#     """
+#     单维异常检测 k-sigma
+#     :param path:
+#     :param k:
+#     :return:
+#     """
+#     # 获取数据
+#     # path = 'D:/Pyprogram/fastApiProject_anomaly_detection/datasets/temperature/raw'
+#
+#
+#     ################################################
+#     for root, dirs, files in os.walk(path):
+#         for dir in dirs:
+#             subdir_path = os.path.join(root, dir)
+#             # sum_data = 0
+#             for file in os.listdir(subdir_path):
+#                 file_path = os.path.join(subdir_path, file)
+#                 # 读取文件到pandas
+#                 if file.endswith('.csv'):
+#                     data = pd.read_csv(file_path, sep=',', names=['timestamp', 'temperature'])
+#
+#                     # 时间戳转换成 unix
+#                     timestamps = data['timestamp'].values
+#                     unix_timestamps = np.array(
+#                         [datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M:%S").timestamp() for ts in timestamps])
+#
+#                     # 找出所有重复行
+#                     same_timestamp_rows = data[data.duplicated(subset='timestamp', keep=False) & (data['timestamp'] == data['timestamp'].shift(1))]
+#
+#                     # data去除重复值,只保留最后一个
+#                     data = data.drop_duplicates(subset='timestamp', keep='last')
+#
+#                     # 计算lof
+#                     #####################################################################
+#
+#                     # 将数据转换为 PyTorch 张量
+#                     temperatures = data['temperature'].values
+#                     X = torch.tensor(np.column_stack((unix_timestamps, temperatures)), dtype=torch.float32)
+#
+#
+#                     # 计算最近邻居
+#                     k = 5
+#                     distances, indices = knn(X, X, k)
+#
+#                     # 计算 LOF 得分
+#                     lof = torch.zeros(X.shape[0])
+#                     for i in range(X.shape[0]):
+#                         k_distances = distances[i][1:]
+#                         k_indices = indices[i][1:]
+#                         reach_distances = torch.max(torch.stack([k_distances, distances[k_indices, 1]], dim=1), dim=1)[
+#                             0]
+#                         lof[i] = torch.mean(reach_distances) / k_distances.mean()
+#
+#                     # 打印异常点
+#                     threshold = 1.5
+#                     anomalies_idx = torch.where(lof > threshold)[0].tolist()
+#                     outliers = data.iloc[anomalies_idx, :]
+#                     print(outliers)
+#
+#                     #####################################################################
+#
+#                     # 保存结果到文件中
+#                     output_path = subdir_path.replace("raw\\", "output/")
+#                     if not os.path.exists(output_path):
+#                         os.mkdir(output_path)
+#
+#                     same_timestamp_rows_filename = os.path.join(output_path, 'duplicated.csv')
+#                     outliers_filename = os.path.join(output_path, 'outliers.csv')
+#
+#                     same_timestamp_rows.to_csv(same_timestamp_rows_filename, index=False)
+#                     outliers.to_csv(outliers_filename, index=False)
+#
+#
+#     ################################################
+#     # return {"原数据行数": data.shape[0],
+#     #         "重复点数量：": same_timestamp_rows.shape[0],
+#     #         "清洗之后数据行数": data.shape[0] - same_timestamp_rows.shape[0],
+#     #         "异常点数量：": outliers.shape[0]}
+#     return {"message:": "success"}
+
 
 @app.post("/Json/repair/temperature/arma")
 async def Json_repair_temperature_arma(Data: TemperatureInput, k= config["k"]):

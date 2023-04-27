@@ -2,7 +2,7 @@ import json
 import re
 
 json_file = r"D:\Pyprogram\fastApiProject_anomaly_detection\python_anomaly_detection.json"
-test_dataset_path = r'D:\Pyprogram\Python_Data_Analysis\data_csv\wired_data\wired_point_no_50294D201003011.csv'
+test_dataset_path = r'D:\Pyprogram\Python_Data_Analysis\data_csv\temperature\Temperature_point_no_0a1ee4feff8d79e0-S.csv'
 train_datasets_path = "D:\Pyprogram\Python_Data_Analysis\data_csv"
 # D:\Pyprogram\Python_Data_Analysis\data_csv\temperature\Temperature_point_no_0a1ee4feff8d79e0-S.csv
 # D:\Pyprogram\Python_Data_Analysis\data_csv\temperature\Temperature_point_no_001de4feff8d79e0-S.csv
