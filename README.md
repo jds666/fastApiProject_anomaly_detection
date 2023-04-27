@@ -10,6 +10,11 @@
 文件main.py,是使用fastapi构建的API。
 
 1. 支持temperature/vibration两种格式的csv/json输入。
-2. 支持k-sigma异常检测方法。
-3. 支持k-sigma数据修复方法。 
-4. 支持json格式的输出。
+2. 支持k-sigma、boxplot、lstm异常检测方法。
+3. 支持k-sigma、boxplot、lstm数据修复方法。 
+4. 支持json格式的输出（lstm具有可视化）。
+## 可视化
+### temperature 单维
+![img.png](show/png/temperature_show.png)
+### vibration 高维
+![img.png](show/png/vibration.png)
