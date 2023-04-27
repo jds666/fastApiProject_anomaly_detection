@@ -29,9 +29,7 @@ from lstm.ploty_show import *
 app = FastAPI()
 
 
-with open('python_anomaly_detection.json') as file:
-     config = json.load(file)
-
+config = get_config_from_json(json_file)
 # 均值计算
 def mean_fun(data):
     return np.mean(data)
@@ -1176,10 +1174,14 @@ async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
     # data timestamps 转换为日期格式
     data["timestamps"] = pd.to_datetime(data.timestamps, unit="ms")
+    # data['timestamps'] = data['timestamps'].apply(
+    #     lambda d: datetime.datetime.fromtimestamp(int(d) / 1000).strftime('%Y-%m-%d %H:%M:%S'))
+    # data['timestamps'] = pd.to_datetime(data['timestamps'])
 
     data.set_index("timestamps", inplace=True)
+    data_time =[str(ts) for ts in data.index.tolist()]
 
-    model_path = r'D:\Pyprogram\fastApiProject_anomaly_detection\lstm\model\temperature\0a1ee4feff8d79e0-S_lstm_model.h5'
+    model_path = config["model_path"]+'\\model\\temperature\\'+Data.id+'_lstm_model.h5'
     loaded_model = load_model(model_path)
 
     ########################推理##############################
@@ -1211,10 +1213,9 @@ async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
 
     # 反归一化数据
     original_data = scaler.inverse_transform(data)
-    anomalies_data = scaler.inverse_transform(test_data[anomalies[0], :])
 
     # 绘制原始数据和异常点
-    plot_show_plotly(original_data, anomalies_data, anomalies, 0)
+    plot_show_plotly(original_data, anomalies,data_time,0,id = Data.id)
 
 
     # 将标记数据转换回json格式
@@ -1225,6 +1226,219 @@ async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
     return response.dict()
     # return {"message:","succeeded"}
 
+@app.post("/Json/repair/temperature/lstm")
+async def Json_repair_temperature_lstm(Data: TemperatureInput,k = config["k"]):
+
+    data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
+    # data timestamps 转换为日期格式
+    data["timestamps"] = pd.to_datetime(data.timestamps, unit="ms")
+
+    data.set_index("timestamps", inplace=True)
+    data_time = [str(ts) for ts in data.index.tolist()]
+
+    model_path = config["model_path"]+'\\model\\temperature\\'+Data.id+'_lstm_model.h5'
+    loaded_model = load_model(model_path)
+
+    ########################推理##############################
+    scaler = MinMaxScaler()  # 归一化
+    data = scaler.fit_transform(data)
+    train_size = 0
+    test_data = data[train_size:, :]
+    #########################################################
+
+    # 对测试集进行预测
+    test_predict = loaded_model.predict(test_data[:, :, np.newaxis])
+    repair_data = test_predict
+    test_predict = np.squeeze(test_predict)
+
+    # 计算平均绝对误差
+    mae = np.mean(np.abs(test_predict - test_data[:, 0]))
+
+    # 根据平均绝对误差确定异常点
+    threshold = mae * config["lstm_threshold_mea_k"]
+    anomalies = np.where(np.abs(test_predict - test_data[:, 0]) > threshold)
+
+    print(threshold)
+    # print(f"异常点：{anomalies[0]}")
+
+    # 标记异常值,如果在anomalies[0]中为1，反之为0
+    anomaly_label = []
+    for i in range(len(Data.values)):
+        if i in anomalies[0]:
+            anomaly_label.append(1)
+        else:
+            anomaly_label.append(0)
+
+    # 反归一化数据
+    original_data = scaler.inverse_transform(data)
+    repair_data = scaler.inverse_transform(repair_data)
+
+
+    #[:5]) 绘制原始数据和异常点
+    # plot_show_plotly(original_data, anomalies, 0,id = Data.id)
+    plot_show_plotly_repair(original_data, repair_data, data_time,id=Data.id)
+    repair_data = np.squeeze(repair_data).tolist()
+
+    # 将标记数据转换回json格式
+    response_data = {"id": Data.id, "anomalyLabel": anomaly_label,"repairedValues":repair_data}
+    response = TemperatureRepairedOutput(**response_data)
+
+    ################################################
+    return response.dict()
+    # return {"message:","succeeded"}
+
+
+@app.post("/Json/anomaly_detection/vibration/lstm")
+async def Json_anomaly_detection_vibration_lstm(Data: VibrationInput):
+
+    data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
+    # data timestamps 转换为日期格式
+    data.index = pd.to_datetime(data.index.values, unit="ms")
+
+    data_time = [str(ts) for ts in data.index.tolist()]
+
+    # 加载模型
+    if Data.dimension == 4:
+        model_path = config["model_path"]+'\\model\\wired_data\\'+Data.id+'_lstm_model.h5'
+    elif Data.dimension == 12:
+        model_path = config["model_path"]+'\\model\\wireless_data\\'+Data.id+'_lstm_model.h5'
+    else:
+        model_path = config["model_path"]+'\\model\\temperature\\'+Data.id+'_lstm_model.h5'
+
+    loaded_model = load_model(model_path)
+
+
+    ########################推理##############################
+    scaler = MinMaxScaler()  # 归一化
+    # print(data.head())
+    data = scaler.fit_transform(data)
+    train_size = 0
+    test_data = data[train_size:, :]
+    #########################################################
+
+    # 对测试集进行预测
+    # print(test_data[:, :, np.newaxis])
+    test_predict = loaded_model.predict(test_data[:, :, np.newaxis])
+    test_predict = np.squeeze(test_predict)
+
+
+    mae = np.mean(np.abs(test_predict[:, 0] - test_data[:, 0]))
+    # 根据平均绝对误差确定异常点
+    threshold = mae * config["lstm_threshold_mea_k"]
+    anomalies_max = np.where(np.abs(test_predict[:,0] - test_data[:, 0]) > threshold)
+
+    anomaly_label_all = []
+    for j in range(Data.dimension):
+        # 计算平均绝对误差
+        mae = np.mean(np.abs(test_predict[:,j] - test_data[:, j]))
+        # 根据平均绝对误差确定异常点
+        threshold = mae * config["lstm_threshold_mea_k"]
+        anomalies = np.where(np.abs(test_predict[:,j] - test_data[:, j]) > threshold)
+        # print(j,f"异常点：{anomalies[0]}")
+        if np.array(anomalies_max).shape[1] < np.array(anomalies).shape[1]:
+            anomalies_max = anomalies
+            # print(f"最大异常点：{np.array(anomalies_max).shape[1]}")
+        # 标记异常值,如果在anomalies[0]中为1，反之为0
+        anomaly_label = []
+        for i in range(len(Data.values)):
+            if i in anomalies[0]:
+                anomaly_label.append(1)
+            else:
+                anomaly_label.append(0)
+        anomaly_label_all.append(anomaly_label)
+
+    # anomaly_label_all  转置
+    anomaly_label_all_n = np.array(anomaly_label_all)
+    anomaly_label_all_n_T = np.transpose(anomaly_label_all_n)
+    anomaly_label_all_T = anomaly_label_all_n_T.tolist()
+
+
+    # 反归一化数据
+    original_data = scaler.inverse_transform(data)
+
+    plot_show_plotly(original_data, anomalies_max,data_time, 0,id = Data.id)
+
+    # 将标记数据转换回json格式
+    response_data = {"id": Data.id, "dimension": Data.dimension, "anomalyLabel": anomaly_label_all_T}
+    response = VibrationAnomalyOutput(**response_data)
+    ################################################
+    return response.dict()
+
+
+@app.post("/Json/repair/vibration/lstm")
+async def Json_repair_vibration_lstm(Data: VibrationInput):
+
+    data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
+    # data timestamps 转换为日期格式
+    data.index = pd.to_datetime(data.index.values, unit="ms")
+
+    data_time = [str(ts) for ts in data.index.tolist()]
+
+    # 加载模型
+    if Data.dimension == 4:
+        model_path = config["model_path"]+'\\model\\wired_data\\'+Data.id+'_lstm_model.h5'
+    elif Data.dimension == 12:
+        model_path = config["model_path"]+'\\model\\wireless_data\\'+Data.id+'_lstm_model.h5'
+    else:
+        model_path = config["model_path"]+'\\model\\temperature\\'+Data.id+'_lstm_model.h5'
+
+    loaded_model = load_model(model_path)
+
+    ########################推理##############################
+    scaler = MinMaxScaler()  # 归一化
+    print(data.head())
+    data = scaler.fit_transform(data)
+    train_size = 0
+    test_data = data[train_size:, :]
+    #########################################################
+
+    # 对测试集进行预测
+    print(test_data[:, :, np.newaxis])
+    test_predict = loaded_model.predict(test_data[:, :, np.newaxis])
+    repair_data = test_predict
+    print(repair_data)
+    test_predict = np.squeeze(test_predict)
+
+    anomaly_label_all = []
+    for j in range(Data.dimension):
+        # 计算平均绝对误差
+        mae = np.mean(np.abs(test_predict[:,j] - test_data[:, j]))
+        # 根据平均绝对误差确定异常点
+        threshold = mae * config["lstm_threshold_mea_k"]
+        anomalies = np.where(np.abs(test_predict[:,j] - test_data[:, j]) > threshold)
+        print(j,f"异常点：{anomalies[0]}")
+
+        # 标记异常值,如果在anomalies[0]中为1，反之为0
+        anomaly_label = []
+        for i in range(len(Data.values)):
+            if i in anomalies[0]:
+                anomaly_label.append(1)
+            else:
+                anomaly_label.append(0)
+        anomaly_label_all.append(anomaly_label)
+
+    # anomaly_label_all  转置
+    anomaly_label_all_n = np.array(anomaly_label_all)
+    anomaly_label_all_n_T = np.transpose(anomaly_label_all_n)
+    anomaly_label_all_T = anomaly_label_all_n_T.tolist()
+
+
+    # 反归一化数据
+    original_data = scaler.inverse_transform(data)
+    repair_data = scaler.inverse_transform(repair_data)
+
+
+    # [:5]) 绘制原始数据和异常点
+    # plot_show_plotly(original_data, anomalies, 0,id = Data.id)
+    plot_show_plotly_repair(original_data, repair_data, data_time, id=Data.id)
+    repair_data = np.squeeze(repair_data).tolist()
+
+    # 将标记数据转换回json格式
+    response_data = {"id": Data.id, "dimension": Data.dimension, "anomalyLabel": anomaly_label_all_T,
+                     "repairedValues": repair_data}
+    response = VibrationRepairedOutput(**response_data)
+    ################################################
+    return response.dict()
 
 @app.post("/Json/repair/temperature/arma")
 async def Json_repair_temperature_arma(Data: TemperatureInput, k= config["k"]):
