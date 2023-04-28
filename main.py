@@ -1299,8 +1299,6 @@ def Json_repair_vibration_lstm(Data: VibrationInput):
 
     return return_VibrationRepairedOutput_response(Data.id, Data.dimension, anomaly_label_sum, repairedValues)
 
-
-
 ##########################################################################################
 ########################################## Test ##########################################
 ##########################################################################################
