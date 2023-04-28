@@ -974,11 +974,6 @@ async def Json_anomaly_detection_vibration_boxplot(Data: VibrationInput,k = conf
     return return_VibrationAnomalyOutput_response(Data.id, Data.dimension,anomaly_label_sum)
 
 
-
-
-
-
-
 @app.post("/Json/repair/temperature/boxplot")
 async def Json_repair_temperature_boxplot(Data: TemperatureInput,k= config["k"]):
     # json to pandas
