@@ -778,7 +778,7 @@ def repair_vibration_k_sigma(path: str,k = config["k"], halfdaynum = 144):
 
 
 @app.post("/Json/anomaly_detection/temperature/k-sigma")
-async def Json_anomaly_detection_temperature_k_sigma(Data: TemperatureInput, k = config["k"]):
+def Json_anomaly_detection_temperature_k_sigma(Data: TemperatureInput, k = config["k"]):
     # json to pandas
     #Data 中的timestamps和values,读取到pandas中成为“timestamps”，“values”两列
 
@@ -800,7 +800,7 @@ async def Json_anomaly_detection_temperature_k_sigma(Data: TemperatureInput, k =
 
 
 @app.post("/Json/anomaly_detection/vibration/k-sigma")
-async def Json_anomaly_detection_vibration_k_sigma(Data: VibrationInput,k = 2):
+def Json_anomaly_detection_vibration_k_sigma(Data: VibrationInput,k = 2):
     # do something with Data
     # Data to pandas
     data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
@@ -836,7 +836,7 @@ async def Json_anomaly_detection_vibration_k_sigma(Data: VibrationInput,k = 2):
 
 
 @app.post("/Json/repair/temperature/k-sigma")
-async def Json_repair_temperature_k_sigma(Data: TemperatureInput,k= config["k"]):
+def Json_repair_temperature_k_sigma(Data: TemperatureInput,k= config["k"]):
     # json to pandas
     # Data 中的timestamps和values,读取到pandas中成为“timestamps”，“values”两列
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
@@ -866,7 +866,7 @@ async def Json_repair_temperature_k_sigma(Data: TemperatureInput,k= config["k"])
 
 
 @app.post("/Json/repair/vibration/k-sigma")
-async def Json_repair_vibration_k_sigma(Data: VibrationInput,k = config["k"]):
+def Json_repair_vibration_k_sigma(Data: VibrationInput,k = config["k"]):
     # do something with data
     # Data to pandas
     data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
@@ -910,7 +910,7 @@ async def Json_repair_vibration_k_sigma(Data: VibrationInput,k = config["k"]):
 
 
 @app.post("/Json/anomaly_detection/temperature/boxplot")
-async def Json_anomaly_detection_temperature_boxplot(Data: TemperatureInput, k = config["k"]):
+def Json_anomaly_detection_temperature_boxplot(Data: TemperatureInput, k = config["k"]):
     # json to pandas
     #Data 中的timestamps和values,读取到pandas中成为“timestamps”，“values”两列
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
@@ -937,7 +937,7 @@ async def Json_anomaly_detection_temperature_boxplot(Data: TemperatureInput, k =
 
 
 @app.post("/Json/anomaly_detection/vibration/boxplot")
-async def Json_anomaly_detection_vibration_boxplot(Data: VibrationInput,k = config["k"]):
+def Json_anomaly_detection_vibration_boxplot(Data: VibrationInput,k = config["k"]):
     # do something with Data
     # Data to pandas
     data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
@@ -972,7 +972,7 @@ async def Json_anomaly_detection_vibration_boxplot(Data: VibrationInput,k = conf
 
 
 @app.post("/Json/repair/temperature/boxplot")
-async def Json_repair_temperature_boxplot(Data: TemperatureInput,k= config["k"]):
+def Json_repair_temperature_boxplot(Data: TemperatureInput,k= config["k"]):
     # json to pandas
     # Data 中的timestamps和values,读取到pandas中成为“timestamps”，“values”两列
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
@@ -1006,7 +1006,7 @@ async def Json_repair_temperature_boxplot(Data: TemperatureInput,k= config["k"])
 
 
 @app.post("/Json/repair/vibration/boxplot")
-async def Json_repair_vibration_boxplot(Data: VibrationInput,k = config["k"]):
+def Json_repair_vibration_boxplot(Data: VibrationInput,k = config["k"]):
     # do something with data
     # Data to pandas
     data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
@@ -1056,7 +1056,7 @@ async def Json_repair_vibration_boxplot(Data: VibrationInput,k = config["k"]):
 
 
 @app.post("/Json/anomaly_detection/temperature/lstm")
-async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
+def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
 
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
     # data timestamps 转换为日期格式
@@ -1107,7 +1107,7 @@ async def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
     return return_TemperatureAnomalyOutput_response(Data.id, anomaly_label)
 
 @app.post("/Json/repair/temperature/lstm")
-async def Json_repair_temperature_lstm(Data: TemperatureInput):
+def Json_repair_temperature_lstm(Data: TemperatureInput):
 
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
     # data timestamps 转换为日期格式
@@ -1163,7 +1163,7 @@ async def Json_repair_temperature_lstm(Data: TemperatureInput):
 
 
 @app.post("/Json/anomaly_detection/vibration/lstm")
-async def Json_anomaly_detection_vibration_lstm(Data: VibrationInput):
+def Json_anomaly_detection_vibration_lstm(Data: VibrationInput):
 
     data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
     # data timestamps 转换为日期格式
@@ -1234,7 +1234,7 @@ async def Json_anomaly_detection_vibration_lstm(Data: VibrationInput):
 
 
 @app.post("/Json/repair/vibration/lstm")
-async def Json_repair_vibration_lstm(Data: VibrationInput):
+def Json_repair_vibration_lstm(Data: VibrationInput):
 
     data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
     # data timestamps 转换为日期格式
@@ -1306,36 +1306,35 @@ async def Json_repair_vibration_lstm(Data: VibrationInput):
 ##########################################################################################
 
 @app.post("/Json/anomaly_detection/temperature/lof")
-async def Json_anomaly_detection_temperature_lof(Data: TemperatureInput):
+def Json_anomaly_detection_temperature_lof(Data: TemperatureInput):
 
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
     # data timestamps 转换为日期格式
     data["timestamps"] = pd.to_datetime(data.timestamps, unit="ms")
-
-    data.set_index("timestamps", inplace=True)
-
     # 定义特征列
     features = ['values']
-
     # 进行异常检测
-    clf = LocalOutlierFactor(n_neighbors=20, contamination=0.01)
-    y_pred = clf.fit_predict(df[features])
-    df['outlier'] = y_pred
+    clf = LocalOutlierFactor(n_neighbors=20, contamination=0.05)
+    y_pred = clf.fit_predict(data[features])
+    data['outlier'] = y_pred
 
+    data['outlier'] = data['outlier'].replace(1, 0).replace(-1, 1)
+    print(data)
     # 绘制折线图，其中红色点表示异常值
     fig = go.Figure()
-    trace1 = go.Scatter(x=df['time'], y=df['a'], mode='lines', name='actual')
-    trace2 = go.Scatter(x=df.loc[df['outlier'] == -1, ['time']].time.tolist(),
-                        y=df.loc[df['outlier'] == -1, ['a']].a.tolist(), mode='markers',
-                        marker=dict(color='red', size=6), name='outliers')
+    trace1 = go.Scatter(x=data["timestamps"], y=data["values"], mode='lines', name='actual')
+    trace2 = go.Scatter(x=data.loc[data['outlier'] == 1, ["timestamps"]].timestamps.tolist(),
+                        y=np.squeeze(data.loc[data['outlier'] == 1, ["values"]].values).tolist(),
+                        mode='markers',
+                        marker=dict(color='red', size=6), name='outlier')
     fig.add_trace(trace1)
     fig.add_trace(trace2)
     fig.show()
 
-    return return_TemperatureAnomalyOutput_response(Data.id, anomaly_label)
+    return return_TemperatureAnomalyOutput_response(Data.id, data['outlier'].to_list())
 
 @app.post("/Json/repair/temperature/lof")
-async def Json_repair_temperature_lof(Data: TemperatureInput):
+def Json_repair_temperature_lof(Data: TemperatureInput):
 
     data = pd.DataFrame({"timestamps": Data.timestamps, "values": Data.values})
     # data timestamps 转换为日期格式
@@ -1391,7 +1390,7 @@ async def Json_repair_temperature_lof(Data: TemperatureInput):
 
 
 @app.post("/Json/anomaly_detection/vibration/lof")
-async def Json_anomaly_detection_vibration_lof(Data: VibrationInput):
+def Json_anomaly_detection_vibration_lof(Data: VibrationInput):
 
     data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
     # data timestamps 转换为日期格式
@@ -1462,7 +1461,7 @@ async def Json_anomaly_detection_vibration_lof(Data: VibrationInput):
 
 
 @app.post("/Json/repair/vibration/lof")
-async def Json_repair_vibration_lof(Data: VibrationInput):
+def Json_repair_vibration_lof(Data: VibrationInput):
 
     data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
     # data timestamps 转换为日期格式
@@ -1612,7 +1611,7 @@ def anomaly_detection_temperature_knn(path: str):
 
 
 @app.post("/Json/repair/temperature/arma")
-async def Json_repair_temperature_arma(Data: TemperatureInput, k= config["k"]):
+def Json_repair_temperature_arma(Data: TemperatureInput, k= config["k"]):
 
     # json to pandas
     # Data 中的timestamps和values,读取到pandas中成为“timestamps”，“values”两列
@@ -1674,7 +1673,7 @@ def generate_html_response():
 
 
 @app.get("/plot", response_class=HTMLResponse)
-async def Json_anomaly_detection_temperature_k_sigma_plot(Data: TemperatureInput, k=3):
+def Json_anomaly_detection_temperature_k_sigma_plot(Data: TemperatureInput, k=3):
     timestamps = Data.timestamps
     values = Data.values
 
@@ -1709,7 +1708,7 @@ async def Json_anomaly_detection_temperature_k_sigma_plot(Data: TemperatureInput
     return HTMLResponse(content=html_content, status_code=200)
 
 @app.get("/items/", response_class=HTMLResponse)
-async def read_items():
+def read_items():
     return generate_html_response()
 
 dash_app = create_dash_app(requests_pathname_prefix="/dash/")
