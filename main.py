@@ -1386,7 +1386,6 @@ def Json_repair_temperature_lof(Data: TemperatureInput):
     return return_TemperatureRepairedOutput_response(Data.id, anomaly_label, repair_data)
 
 
-
 @app.post("/Json/anomaly_detection/vibration/lof")
 def Json_anomaly_detection_vibration_lof(Data: VibrationInput):
 
