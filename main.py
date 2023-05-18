@@ -32,7 +32,6 @@ from ksigma.useJson import *
 from boxplot.useJson import *
 from lof.useJson import *
 
-
 app = FastAPI()
 
 config = get_config_from_json(json_file)
