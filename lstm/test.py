@@ -10,7 +10,7 @@ config = get_config_from_json(json_file)
 
 #测试数据
 data = pd.read_csv(test_dataset_path, index_col=0)
-# print(data.head(5))
+# # print(data.head(5))
 # 转换数据格式
 scaler = MinMaxScaler()  # 归一化
 Data = scaler.fit_transform(data)
@@ -56,4 +56,4 @@ fig.write_html(ploty_html_path)
 
 # 输出异常值
 anomalies_list = list(anomalies)
-print(anomalies_list)
+#print(anomalies_list)

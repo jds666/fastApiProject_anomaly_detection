@@ -16,7 +16,6 @@ config = get_config_from_json(json_file)
 def lstm_model(data, config, model_path):
     # 转换数据格式
     scaler = MinMaxScaler()  # 归一化
-    print(data.head())
     data = scaler.fit_transform(data)
     # 将数据拆分为训练集和测试集
     train_size = int(len(data) * 0.9)

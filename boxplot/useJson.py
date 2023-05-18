@@ -121,7 +121,7 @@ def JsonRepairVibrationBoxplot(Data, k):
     # do something with data
     # Data to pandas
     data = pd.DataFrame(Data.values, columns=Data.valueNameList, index=Data.timestamps)
-    print(data)
+    #print(data)
     # data timestamps 转换为日期格式
     datetime = pd.to_datetime(data.index, unit="ms")
 

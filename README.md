@@ -16,7 +16,7 @@
 ## 可视化
 ### temperature 单维
 ![img.png](show/png/temperature_show.png)
+![img.png](img.png)
 ### vibration 高维
 ![img.png](show/png/vibration.png)
 
-![img.png](img.png)

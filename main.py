@@ -26,7 +26,7 @@ from keras.models import load_model
 from lstm.utils import *
 from lstm.ploty_show import *
 from lstm.useJson import *
-from myclass.myclass import *
+from InputOutputClass.InputOutputclass import *
 from lof.plotly_show import *
 from ksigma.tocsv import *
 from ksigma.useJson import *

@@ -5,5 +5,5 @@
   "lstm_batch_size": 128,
   "lstm_threshold_mea_k": 2,
   "model_path": "D:\\Pyprogram\\fastApiProject_anomaly_detection\\lstm",
-  "is_plot_result": true
+  "is_plot_result": false
 }

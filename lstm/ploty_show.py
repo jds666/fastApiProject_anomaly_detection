@@ -8,7 +8,6 @@ def plot_show_plotly(original_data,anomalies,datetime,columns_names,train_size,i
 
     # 绘制每个特征的曲线
     fig = go.Figure()
-    print(original_data)
     for i in range(original_data.shape[1]):
         trace = go.Scatter(x=datetime,#list(range(len(original_data))),
                            y=original_data[:, i],
