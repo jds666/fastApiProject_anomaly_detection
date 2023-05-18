@@ -35,7 +35,6 @@ from lof.useJson import *
 app = FastAPI()
 
 config = get_config_from_json(json_file)
-# 均值计算
 
 
 ##########################################################################################
