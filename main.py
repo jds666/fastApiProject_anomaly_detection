@@ -119,6 +119,7 @@ def Json_repair_vibration_boxplot(Data: VibrationInput,k = config["k"]):
 
 
 #####################################  json-lstm ######################################
+# 只训练了几个lstm模型
 @app.post("/Json/anomaly_detection/temperature/lstm")
 def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
     anomalyLabel = JsonAnomalyDetectionTemperatureLstm(Data)
