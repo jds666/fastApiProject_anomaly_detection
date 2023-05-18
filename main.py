@@ -74,7 +74,6 @@ def repair_vibration_k_sigma(path: str,k = config["k"], halfdaynum = 144):
     repairVibrationKSigma(path,k, halfdaynum)
     return {"message:": "success"}
 
-
 #####################################  json-k-sigma ######################################
 @app.post("/Json/anomaly_detection/temperature/k-sigma")
 def Json_anomaly_detection_temperature_k_sigma(Data: TemperatureInput, k = config["k"]):
