@@ -113,33 +113,33 @@ def plot_show_plotly(original_data,anomalies,datetime,id = " "):
     :param id:int
     :return:
     '''
+    print(datetime)
     print(original_data)
-    print(np.array(original_data).ndim)
     # 绘制每个特征的曲线
     fig = go.Figure()
-    if  np.array(original_data).ndim == 1:
+    if  original_data.shape[1] == 1:
         trace = go.Scatter(x=datetime,
-                           y=original_data,
+                           y=original_data.iloc[:, 0],
                            mode='lines',
-                           name=f'Feature')
+                           name=original_data.columns.tolist()[0])
         fig.add_trace(trace)
-        trace2 = go.Scatter(x=datetime,
-                            y=[original_data[i] for i in range(len(anomalies)) if anomalies[i] == 1],
+        trace2 = go.Scatter(x=[datetime[idx] for idx, val in enumerate(anomalies) if val == 1],
+                            y=[original_data.iloc[idx, 0] for idx, val in enumerate(anomalies) if val == 1],
                             mode='markers',
                             marker=dict(color='red', size=6),
                             name='Anomalies')
         fig.add_trace(trace2)
     else:
-        for i in range(len(original_data[0])):
+        for col_label, col_data in original_data.iteritems():
             trace = go.Scatter(x=datetime,
-                               y=[original_data[i] for i in range(len(original_data))],
+                               y=col_data,
                                mode='lines',
-                               name=f'Feature {i+1}')
+                               name=col_label)
             fig.add_trace(trace)
 
-        anomalies_idx = np.where(anomalies == 1)[0].tolist()
-        print(anomalies_idx)
-
+        print("anomalies:",anomalies)
+        anomalies_idx = [idx for idx, val in enumerate(anomalies) if val == 1]
+        print("anomalies_idx:",anomalies_idx)
         # 绘制异常点阴影区域
         x_data = []
 
@@ -150,10 +150,10 @@ def plot_show_plotly(original_data,anomalies,datetime,id = " "):
             if i < len(anomalies_idx) - 1 and anomalies_idx[i + 1] - anomalies_idx[i] > 1:
                 # If the next point is not continuous, draw a rectangle
                 fig.add_shape(type='rect',
-                              x0=datetime[x_data[0]],#x_data[0] - 0.5,
-                              y0=np.min(original_data[:,:]),
-                              x1=datetime[x_data[-1]],#x_data[-1] + 0.5,
-                              y1=np.max(original_data[:,:]),
+                              x0=datetime[int(x_data[0] - 0.5)],#x_data[0] - 0.5,
+                              y0=original_data.iloc[:,1:].min().min(),
+                              x1=datetime[int(x_data[-1] + 0.5)],#x_data[-1] + 0.5,
+                              y1=original_data.iloc[:,1:].max().max(),
                               fillcolor='rgba(255, 0, 0, 0.3)',
                               line=dict(color='rgba(255, 0, 0, 0.3)', width=1),
                               opacity=0.5)
@@ -162,15 +162,14 @@ def plot_show_plotly(original_data,anomalies,datetime,id = " "):
         # 最后一个区间上色
         if x_data:
             fig.add_shape(type='rect',
-                          x0=datetime[x_data[0]],#x_data[0] - 0.5,
-                          y0=np.min(original_data[:, :]),
-                          x1=datetime[x_data[-1]],#x_data[-1] + 0.5,
-                          y1=np.max(original_data[:, :]),
+                          x0=datetime[int(x_data[0] - 0.5)],#x_data[0] - 0.5,
+                          y0=original_data.iloc[:,1:].min().min(),
+                          x1=datetime[int(x_data[-1] + 0.5)],#x_data[-1] + 0.5,
+                          y1=original_data.iloc[:,1:].max().max(),
                           fillcolor='rgba(255, 0, 0, 0.3)',
-                          line=dict(color='rgba(255, 0, 0, 0.3)', width=0.2),
-                          opacity=0.5)
-
-
+                          line=dict(color='rgba(255, 0, 0, 0.3)', width=1),
+                          opacity=0.5,
+                          name='Contiguous Anomalies')
 
     # 绘制图表
     fig.update_layout(title='Original Data and Anomalies      '+id,

@@ -47,30 +47,24 @@ config = get_config_from_json(json_file)
 
 #####################################  csv-k-sigma  ######################################
 @app.get('/anomaly_detection/temperature/k_sigma')
-def anomaly_detection_temperature_k_sigma(path: str,k = config["k"]):
+def anomaly_detection_temperature_k_sigma(path = config["csv_path"],k = config["k"]):
     # 获取数据
-    # path = 'D:/Pyprogram/fastApiProject_anomaly_detection/datasets/temperature/raw'
     anomalyDetectionTemperatureKSigma(path, k)
     return {"message:": "success"}
 
 @app.get('/repair/temperature/k_sigma')
-def repair_temperature_k_sigma(path: str,k = config["k"]):
-    # 获取数据
-    # path = 'D:/Pyprogram/fastApiProject_anomaly_detection/datasets/temperature/raw'
+def repair_temperature_k_sigma(path = config["csv_path"],k = config["k"]):
     repairTemperatureKSigma(path, k)
     return {"message:": "success"}
 
 @app.get('/anomaly_detection/vibration/k_sigma')
-def anomaly_detection_vibration_k_sigma(path: str,k = config["k"], halfdaynum = 144):
-    # 获取数据
-    # path = 'D:/Pyprogram/fastApiProject_anomaly_detection/datasets/vibration/raw'
+def anomaly_detection_vibration_k_sigma(path = config["csv_path"],k = config["k"], halfdaynum = 144):
     anomalyDetectionVibrationKSigma(path,k, halfdaynum)
     return {"message:": "success"}
 
 @app.get('/repair/vibration/k_sigma')
-def repair_vibration_k_sigma(path: str,k = config["k"], halfdaynum = 144):
+def repair_vibration_k_sigma(path = config["csv_path"], k = config["k"], halfdaynum = 144):
     # 获取数据
-    # path = 'D:/Pyprogram/fastApiProject_anomaly_detection/datasets/vibration/raw'
     repairVibrationKSigma(path,k, halfdaynum)
     return {"message:": "success"}
 

@@ -32,7 +32,7 @@ def JsonAnomalyDetectionTemperatureBoxplot(Data, k):
 
     # 绘制折线图，其中红色点表示异常值
     if config["is_plot_result"]:
-        plot_show_plotly(Data.values,anomaly_label,data["timestamps"],Data.id)
+        plot_show_plotly(data.iloc[:,1:],anomaly_label,data["timestamps"],Data.id)
 
     return anomaly_label
 
@@ -72,7 +72,7 @@ def JsonAnomalyDetectionVibrationBoxplot(Data, k):
 
     # 绘制折线图，其中红色阴影表示异常
     if config["is_plot_result"]:
-        plot_show_plotly(Data.values,anomaly_label_sum,datetime,Data.id)
+        plot_show_plotly(data,anomaly_label_sum,datetime,Data.id)
 
     return anomaly_label_sum
 
