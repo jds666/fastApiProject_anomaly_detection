@@ -10,7 +10,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
-from plot_data_from_csv import *
 from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, Request
 from fastapi.middleware.wsgi import WSGIMiddleware
