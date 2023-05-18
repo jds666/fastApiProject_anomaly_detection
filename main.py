@@ -71,24 +71,20 @@ def Json_anomaly_detection_temperature_k_sigma(Data: TemperatureInput, k = confi
     anomalyLabel = JsonAnomalyDetectionTemperatureKSigma(Data, k)
     return return_TemperatureAnomalyOutput_response(Data.id, anomalyLabel)
 
-
 @app.post("/Json/anomaly_detection/vibration/k-sigma")
 def Json_anomaly_detection_vibration_k_sigma(Data: VibrationInput,k = config["k"]):
     anomalyLabelSum = JsonAnomalyDetectionVibrationKSigma(Data, k)
     return return_VibrationAnomalyOutput_response(Data.id, Data.dimension, anomalyLabelSum)
-
 
 @app.post("/Json/repair/temperature/k-sigma")
 def Json_repair_temperature_k_sigma(Data: TemperatureInput,k= config["k"]):
     anomalyLabel, repairedData  = JsonRepairTemperatureKSigma(Data,k)
     return return_TemperatureRepairedOutput_response(Data.id, anomalyLabel, repairedData)
 
-
 @app.post("/Json/repair/vibration/k-sigma")
 def Json_repair_vibration_k_sigma(Data: VibrationInput,k = config["k"]):
     anomalyLabel, repairedData = JsonRepairVibrationKSigma(Data, k)
     return return_VibrationRepairedOutput_response(Data.id, Data.dimension, anomalyLabel, repairedData)
-
 
 #####################################  json-boxplot ######################################
 @app.post("/Json/anomaly_detection/temperature/boxplot")
@@ -96,18 +92,15 @@ def Json_anomaly_detection_temperature_boxplot(Data: TemperatureInput, k = confi
     anomalyLabel = JsonAnomalyDetectionTemperatureBoxplot(Data, k)
     return return_TemperatureAnomalyOutput_response(Data.id, anomalyLabel)
 
-
 @app.post("/Json/anomaly_detection/vibration/boxplot")
 def Json_anomaly_detection_vibration_boxplot(Data: VibrationInput,k = config["k"]):
     anomalyLabelSum = JsonAnomalyDetectionVibrationBoxplot(Data, k)
     return return_VibrationAnomalyOutput_response(Data.id, Data.dimension,anomalyLabelSum)
 
-
 @app.post("/Json/repair/temperature/boxplot")
 def Json_repair_temperature_boxplot(Data: TemperatureInput,k= config["k"]):
     anomalyLabel, repairedData = JsonRepairTemperatureBoxplot(Data, k)
     return return_TemperatureRepairedOutput_response(Data.id, anomalyLabel, repairedData)
-
 
 @app.post("/Json/repair/vibration/boxplot")
 def Json_repair_vibration_boxplot(Data: VibrationInput,k = config["k"]):
@@ -121,24 +114,20 @@ def Json_anomaly_detection_temperature_lstm(Data: TemperatureInput):
     anomalyLabel = JsonAnomalyDetectionTemperatureLstm(Data)
     return return_TemperatureAnomalyOutput_response(Data.id, anomalyLabel)
 
-
 @app.post("/Json/repair/temperature/lstm")
 def Json_repair_temperature_lstm(Data: TemperatureInput):
     anomalyLabel, repairData = JsonRepairTemperatureLstm(Data)
     return return_TemperatureRepairedOutput_response(Data.id, anomalyLabel, repairData)
-
 
 @app.post("/Json/anomaly_detection/vibration/lstm")
 def Json_anomaly_detection_vibration_lstm(Data: VibrationInput):
     anomalyLabelSum = JsonAnomalyDetectionVibrationLstm(Data)
     return return_VibrationAnomalyOutput_response(Data.id, Data.dimension,anomalyLabelSum)
 
-
 @app.post("/Json/repair/vibration/lstm")
 def Json_repair_vibration_lstm(Data: VibrationInput):
     anomalyLabelSum, repairedData = JsonRepairVibrationLstm(Data)
     return return_VibrationRepairedOutput_response(Data.id, Data.dimension, anomalyLabelSum, repairedData)
-
 
 #####################################  json-lof ######################################
 
@@ -146,7 +135,6 @@ def Json_repair_vibration_lstm(Data: VibrationInput):
 def Json_anomaly_detection_temperature_lof(Data: TemperatureInput):
     anomalyLabel = JsonAnomalyDetectionTemperatureLof(Data)
     return return_TemperatureAnomalyOutput_response(Data.id, anomalyLabel)
-
 
 @app.post("/Json/anomaly_detection/vibration/lof")
 def Json_anomaly_detection_vibration_lof(Data: VibrationInput):
