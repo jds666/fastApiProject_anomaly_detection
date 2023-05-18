@@ -3,7 +3,8 @@ import dash
 from dash.dependencies import Input, Output
 from dash import dcc, html
 import pandas as pd
-
+import plotly.express as px
+import plotly.graph_objs as go
 
 def create_dash_app(requests_pathname_prefix: str = None) -> dash.Dash:
     app = dash.Dash(__name__, requests_pathname_prefix=requests_pathname_prefix)

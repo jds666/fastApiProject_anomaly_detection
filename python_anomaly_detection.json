@@ -1,8 +1,8 @@
 {
-  "k": 3,
-  "method": "k-sigma",
+  "k": 1,
   "lstm_epochs": 50,
   "lstm_batch_size": 128,
   "lstm_threshold_mea_k": 2,
-  "model_path": "D:\\Pyprogram\\fastApiProject_anomaly_detection\\lstm"
+  "model_path": "D:\\Pyprogram\\fastApiProject_anomaly_detection\\lstm",
+  "is_plot_result": false
 }

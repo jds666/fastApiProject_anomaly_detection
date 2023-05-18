@@ -4,15 +4,16 @@ import plotly.offline as pyo
 import matplotlib.pyplot as plt
 
 
-def plot_show_plotly(original_data,anomalies,datetime,train_size,id = " "):
+def plot_show_plotly(original_data,anomalies,datetime,columns_names,train_size,id = " "):
 
     # 绘制每个特征的曲线
     fig = go.Figure()
+    print(original_data)
     for i in range(original_data.shape[1]):
         trace = go.Scatter(x=datetime,#list(range(len(original_data))),
                            y=original_data[:, i],
                            mode='lines',
-                           name=f'Feature {i+1}')
+                           name=columns_names[i])
         fig.add_trace(trace)
 
     # 绘制异常点散点图
@@ -64,32 +65,35 @@ def plot_show_plotly(original_data,anomalies,datetime,train_size,id = " "):
     fig.update_layout(title='Original Data and Anomalies      '+id,
                       xaxis_title='Time',
                       yaxis_title='Value',
+                      font=dict(size=18),
                       showlegend=True)
 
     fig.show()
     return fig
 
-def plot_show_plotly_repair(original_data,repair_data,datetime,id = " "):
+def plot_show_plotly_repair(original_data,repair_data,datetime,columns_names,id = " "):
     # 绘制每个特征的曲线
     fig = go.Figure()
+    print(repair_data)
     for i in range(original_data.shape[1]):
         #原始
         trace = go.Scatter(x=datetime,
                            y=original_data[:, i],
                            mode='lines',
-                           name=f'original_data {i + 1}')
+                           name=columns_names[i]+'(original)')
         fig.add_trace(trace)
         #修复
         trace2 = go.Scatter(x=datetime,
                            y=repair_data[:, i],
                            mode='lines',
-                           name=f'repair_data {i + 1}')
+                           name=columns_names[i]+'(repaired)')
         fig.add_trace(trace2)
 
     # 绘制图表
     fig.update_layout(title='Original Data and Repaired Data      ' + id,
                       xaxis_title='Time',
                       yaxis_title='Value',
+                      font=dict(size=18),
                       showlegend=True)
 
     fig.show()
